@@ -5,40 +5,58 @@ import { FcGoogle } from "react-icons/fc";
 import video from "../assets/video.mp4";
 import whiteLogo from "../assets/whiteLogo.png";
 import axios from "axios";
+import { client } from "../client";
 
 const Login = () => {
-  const [user, setUser] = useState([]);
-  const [profile, setProfile] = useState({});
+  const [response, setResponse] = useState(null);
+
+  const navigate = useNavigate();
 
   const login = useGoogleLogin({
-    onSuccess: (codeResponse) => {
-      setUser(codeResponse);
-      console.log(codeResponse);
-      localStorage.setItem("user", JSON.stringify(codeResponse));
+    onSuccess: (credentialResponse) => {
+      setResponse(credentialResponse);
     },
 
-    onError: (error) => console.log("Login Failed:", error),
+    onError: () => {
+      console.log("Login Failed");
+    },
   });
 
   useEffect(() => {
-    if (user) {
+    if (response) {
       axios
         .get(
-          `https://www.googleapis.com/oauth2/v1/userinfo?access_token=${user.access_token}`,
+          `https://www.googleapis.com/oauth2/v1/userinfo?access_token=${response.access_token}`,
           {
             headers: {
-              Authorization: `Bearer ${user.access_token}`,
+              Authorization: `Bearer ${response.access_token}`,
               Accept: "application/json",
             },
           }
         )
         .then((res) => {
-          setProfile(res.data);
           console.log(res.data);
+          const user = res.data;
+          localStorage.setItem("user", JSON.stringify(user));
+
+          const { name, id, picture } = user;
+
+          console.log(name, id, picture);
+
+          const doc = {
+            _id: id,
+            _type: "user",
+            userName: name,
+            image: picture,
+          };
+          console.log(doc);
+          client.createIfNotExists(doc).then(() => {
+            navigate("/");
+          });
         })
         .catch((err) => console.log(err));
     }
-  }, [user]);
+  }, [response]);
 
   return (
     <div className="flex justify-start flex-col h-screen items-center">
