@@ -9,6 +9,7 @@ import { fetchUser } from "../utils/fetchUser";
 
 const Pin = ({ pin }) => {
   console.log(pin);
+  // console.log(pin);
   const { postedBy, image, destination, _id, save } = pin;
 
   const [postHovered, setPostHovered] = useState(false);
@@ -16,10 +17,12 @@ const Pin = ({ pin }) => {
 
   const navigate = useNavigate();
   const userInfo = fetchUser();
+  console.log("userInfo", userInfo);
+  console.log("postedBy", postedBy);
 
-  //check if pin has been already saved
+  //check if pin has been already saved. The !! converts to boolean
   const alreadySaved = !!save?.filter(
-    (item) => item.postedBy._id === userInfo.googleId
+    (item) => item.postedBy?._id === userInfo.id
   ).length;
 
   const savePin = (id) => {
@@ -32,21 +35,22 @@ const Pin = ({ pin }) => {
         .insert("after", "save[-1]", [
           {
             _key: uuidv4(),
-            userId: userInfo.googleId,
+            userId: userInfo.id,
             postedBy: {
               _type: "postedBy",
-              _ref: userInfo.googleId,
+              _ref: userInfo.id,
             },
           },
         ])
         .commit()
         .then(() => {
           window.location.reload();
+          setSavingPost(false);
         });
     }
   };
 
-  console.log(save);
+  // console.log(save);
   return (
     <div className="m-2">
       <div
@@ -76,7 +80,7 @@ const Pin = ({ pin }) => {
                   <MdDownloadForOffline />
                 </a>
               </div>
-              {alreadySaved ? (
+              {alreadySaved?.length !== 0 ? (
                 <button
                   type="button"
                   className="bg-red-500 text-white opacity-70 hover:opacity-100 font-bold px-5 py-1 text-base rounded-3xl hover:shadow-md outline-none "
@@ -92,7 +96,7 @@ const Pin = ({ pin }) => {
                   type="button "
                   className="bg-red-500 text-white opacity-70 hover:opacity-100 font-bold px-5 py-1 text-base rounded-3xl hover:shadow-md outline-none"
                 >
-                  Save
+                  {pin?.save?.length} {savingPost ? "Saving" : "Save"}
                 </button>
               )}
             </div>
