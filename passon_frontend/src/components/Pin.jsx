@@ -3,7 +3,7 @@ import { client, urlFor } from "../client";
 import { Link, useNavigate } from "react-router-dom";
 import { v4 as uuidv4 } from "uuid";
 import { MdDownloadForOffline } from "react-icons/md";
-import { AiTwotineDelete } from "react-icons/ai";
+import { AiTwotoneDelete } from "react-icons/ai";
 import { BsFillArrowUpRightCircleFill } from "react-icons/bs";
 import { fetchUser } from "../utils/fetchUser";
 
@@ -17,16 +17,19 @@ const Pin = ({ pin }) => {
 
   const navigate = useNavigate();
   const userInfo = fetchUser();
-  console.log("userInfo", userInfo);
-  console.log("postedBy", postedBy);
+  // console.log("userInfo", userInfo);
+  // console.log("postedBy", postedBy);
+  console.log(save?.length);
 
   //check if pin has been already saved. The !! converts to boolean
-  const alreadySaved = !!save?.filter(
-    (item) => item.postedBy?._id === userInfo.id
-  ).length;
+  let alreadySaved = save?.filter(
+    (item) => item?.postedBy?._id === userInfo.id
+  );
+
+  alreadySaved = alreadySaved?.length > 0 ? alreadySaved : [];
 
   const savePin = (id) => {
-    if (!alreadySaved) {
+    if (alreadySaved?.length === 0) {
       setSavingPost(true);
       //update document in Sanity
       client
@@ -48,6 +51,10 @@ const Pin = ({ pin }) => {
           setSavingPost(false);
         });
     }
+  };
+
+  const deletePin = (id) => {
+    client.delete(id).then(() => window.location.reload());
   };
 
   // console.log(save);
@@ -86,6 +93,7 @@ const Pin = ({ pin }) => {
                   className="bg-red-500 text-white opacity-70 hover:opacity-100 font-bold px-5 py-1 text-base rounded-3xl hover:shadow-md outline-none "
                 >
                   {save?.length} Saved
+                  {/* Saved */}
                 </button>
               ) : (
                 <button
@@ -100,11 +108,48 @@ const Pin = ({ pin }) => {
                 </button>
               )}
             </div>
+            <div className="flex justify-between items-center gap-2 w-full">
+              {destination && (
+                <a
+                  href={destination}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="bg-white flex items-center gap-2 text-black font-black p-2 pl-4 pr-4 rounded-full opacity-70 hover:opacity-100 hover:shadow-md"
+                >
+                  <BsFillArrowUpRightCircleFill />
+                  {destination.length > 20
+                    ? destination.slice(8, 17)
+                    : destination.slice(8)}
+                </a>
+              )}
+              {postedBy?._id === userInfo.id && (
+                <button
+                  className="bg-white  opacity-70 hover:opacity-100 font-bold p-2 text-base rounded-3xl hover:shadow-md outline-none "
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    deletePin(_id);
+                  }}
+                >
+                  <AiTwotoneDelete />
+                </button>
+              )}
+            </div>
           </div>
         )}
       </div>
 
-      {pin.postedBy.userName}
+      <Link
+        to={`user-profile/${userInfo?._id}`}
+        className="flex gap-2 mt-2 items-center"
+      >
+        <img
+          src={postedBy?.image}
+          alt="user-profile"
+          className="w-8 h-8 rounded-full object-cover"
+        />
+        <p className="font-semibold capitalize">{postedBy?.userName}</p>
+      </Link>
     </div>
   );
 };
